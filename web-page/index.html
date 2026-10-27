@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Web App</title>
+  <style>
+    :root { --bg:#f4f6fb; --card:#fff; --text:#1f2937; --accent:#4f46e5; --muted:#6b7280; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#111827; --card:#1f2937; --text:#f3f4f6; --accent:#818cf8; --muted:#9ca3af; }
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+           background:var(--bg); color:var(--text); min-height:100vh; display:flex; justify-content:center; padding:16px; }
+    main { width:100%; max-width:520px; }
+    header { text-align:center; margin:24px 0; }
+    h1 { margin:0; font-size:1.8rem; }
+    header p { color:var(--muted); margin:6px 0 0; }
+    .card { background:var(--card); border-radius:14px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+    form { display:flex; gap:8px; }
+    input[type=text] { flex:1; padding:12px; border:1px solid #d1d5db; border-radius:8px; font-size:1rem;
+                       background:transparent; color:inherit; }
+    button { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:0 18px; font-size:1rem; cursor:pointer; }
+    ul { list-style:none; padding:0; margin:16px 0 0; }
+    li { display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid rgba(128,128,128,.2); }
+    li.done span { text-decoration:line-through; color:var(--muted); }
+    li span { flex:1; word-break:break-word; }
+    li button { background:transparent; color:#ef4444; font-size:1.2rem; padding:0 8px; }
+    .status { text-align:center; color:var(--muted); font-size:.85rem; margin-top:14px; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>📝 My Tasks</h1>
+      <p>A simple web app you can open from anywhere</p>
+    </header>
+
+    <div class="card">
+      <form id="form">
+        <input id="input" type="text" placeholder="Add a task..." autocomplete="off" required>
+        <button type="submit">Add</button>
+      </form>
+      <ul id="list"></ul>
+      <div class="status" id="status"></div>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const list = document.getElementById('list');
+    const status = document.getElementById('status');
+    let tasks = [];
+
+    try { tasks = JSON.parse(localStorage.getItem('tasks') || '[]'); } catch (e) {}
+
+    function save() {
+      try { localStorage.setItem('tasks', JSON.stringify(tasks)); } catch (e) {}
+    }
+
+    function render() {
+      list.innerHTML = '';
+      tasks.forEach((t, i) => {
+        const li = document.createElement('li');
+        if (t.done) li.className = 'done';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = t.done;
+        cb.onchange = () => { t.done = cb.checked; save(); render(); };
+
+        const span = document.createElement('span');
+        span.textContent = t.text;
+
+        const del = document.createElement('button');
+        del.textContent = '×';
+        del.title = 'Delete';
+        del.onclick = () => { tasks.splice(i, 1); save(); render(); };
+
+        li.append(cb, span, del);
+        list.appendChild(li);
+      });
+      const left = tasks.filter(t => !t.done).length;
+      status.textContent = tasks.length ? `${left} of ${tasks.length} tasks remaining` : 'No tasks yet';
+    }
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      tasks.push({ text, done: false });
+      input.value = '';
+      save();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
